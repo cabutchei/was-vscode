@@ -1,61 +1,160 @@
 {
   "name": "was-vscode",
-  "displayName": "was-vscode",
-  "description": "Websphere and VS Code integration",
+  "displayName": "WebSphere Controller",
+  "description": "VS Code extension that lets you control Websphere via the UI",
   "version": "0.0.1",
+  "license": "MIT",
   "engines": {
-    "vscode": "^1.70.0"
+    "vscode": "^1.90.0"
   },
-  "main": "./out/extension.js",
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onCommand:websphere.refreshStatus",
+    "onStartupFinished"
+  ],
+  "icon": "resources/websphere.png",
+  "main": "./dist/extension.js",
   "contributes": {
-    "views": {
-      "explorer": [
-        {
-          "id": "was",
-          "name": "Websphereee"
-        }
-      ]
-    },
     "commands": [
-      {
-        "command": "was.start",
-        "title": "Start Serverrrr"
-      },
-      {
-        "command": "was.stop",
-        "title": "Stop Server"
-      }
-    ],
-    "menus": {
-      "view/item/context": [
         {
-          "command": "was.start",
-          "when": "viewItem == server",
-          "group": "navigation"
+            "command": "websphere.startServer",
+            "title": "Start server"
         },
         {
-          "command": "was.stop",
-          "when": "viewItem == server",
-          "group": "navigation"
+            "command": "websphere.stopServer",
+            "title": "Stop server"
+        },
+        {
+            "command": "websphere.refreshStatus",
+            "title": "Refresh Server Status"
+        },
+        {
+            "command": "websphere.configureLooseEar",
+            "title": "Configure Loose EAR Deployment"
+        },
+        {
+            "command": "websphere.removeModule",
+            "title": "some title"
         }
-      ]
+    ],
+    "viewsContainers": {
+        "activitybar": [
+            {
+                "id": "websphere",
+                "title": "WebSphere",
+                "icon": "resources/websphere.png"
+            }
+        ]
+    },
+    "views": {
+        "explorer": [
+            {
+                "id": "websphereLooseEar",
+                "name": "WebSphere",
+                "icon": "resources/websphere.png"
+            }
+        ]
+    },
+    "menus": {
+        "view/item/context": [
+            {
+                "command": "websphere.configureLooseEar",
+                "when": "view == websphereLooseEar && viewItem == server",
+                "group": "navigation"
+            },
+            {
+                "command": "websphere.startServer",
+                "when": "view == websphereLooseEar && viewItem == server",
+                "group": "navigation"
+            },
+            {
+                "command": "websphere.stopServer",
+                "when": "view == websphereLooseEar && viewItem == server",
+                "group": "navigation"
+            },
+            {
+                "command": "websphere.removeModule",
+                "when": "view == websphereLooseEar && viewItem == module",
+                "group": "navigation"
+            }
+        ]
+    },
+    "configuration": {
+      "title": "WebSphere",
+      "properties": {
+        "websphere.agent.executablePath": {
+          "type": "string",
+          "markdownDescription": "Absolute path to the WAS monitoring server",
+          "default": "",
+          "scope": "machine"
+        },
+        "websphere.log.level": {
+          "type": "string",
+          "enum": [
+            "trace",
+            "debug",
+            "info",
+            "warn",
+            "error"
+          ],
+          "default": "info",
+          "markdownDescription": "Minimum client log level for the extension (internal logging)"
+        },
+        "websphere.request.timeoutMs": {
+          "type": "number",
+          "default": 10000,
+          "markdownDescription": "Default timeout (ms) for agent requests."
+        },
+        "websphere.agent.transport": {
+            "type": "string",
+            "enum": ["stdio", "tcp"],
+            "default": "tcp"
+        },
+        "websphere.agent.host": {
+            "type": "string",
+            "default": "localhost"
+        },
+        "websphere.agent.port": {
+            "type": "number",
+            "default": 9999
+        },
+        "websphere.server.javaPath": {
+            "type": "string",
+            "default": "java",
+            "description": "Path to the Java executable used to start WebSphere."
+        },
+        "websphere.server.home": {
+            "type": "string",
+            "default": "",
+            "description": "WebSphere installation home directory."
+        },
+        "websphere.server.logFile": {
+            "type": "string",
+            "default": "",
+            "description": "Full path to the WebSphere log file"
+        }
+      }
     }
   },
   "scripts": {
+    "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
-    "prepublish": "npm run compile",
-    "vscode:prepublish": "npm run compile"
+    "lint": "eslint 'src/**/*.ts'",
+    "package": "vsce package",
+    "prepare": "npm run compile"
   },
   "devDependencies": {
-    "@types/vscode": "^1.102.0",
-    "@types/mocha": "^10.0.10",
-    "@types/node": "20.x",
-    "@typescript-eslint/eslint-plugin": "^8.31.1",
-    "@typescript-eslint/parser": "^8.31.1",
-    "eslint": "^9.25.1",
-    "typescript": "^5.8.3",
-    "@vscode/test-cli": "^0.0.11",
-    "@vscode/test-electron": "^2.5.2"
+    "@types/node": "^20.12.7",
+    "@types/uuid": "^10.0.0",
+    "@types/vscode": "^1.90.0",
+    "eslint": "^9.5.0",
+    "typescript": "^5.4.0",
+    "vsce": "^2.10.0"
+  },
+  "dependencies": {
+    "uuid": "^9.0.1"
   }
 }

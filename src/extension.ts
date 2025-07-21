@@ -10,6 +10,7 @@ import { ServerProcessService } from './services/ServerProcessService';
 import { DescriptorTreeDataProvider } from './views/DescriptorTreeDataProvider';
 import { registerConfigureLooseEar } from './commands/ConfigureLooseEar';
 import { registerStartServer } from './commands/StartServer';
+import * as path from 'path';
 
 
 
@@ -34,7 +35,8 @@ export async function activate(ctx: vscode.ExtensionContext) {
             }
         }
     );
-    const treeProvider = new DescriptorTreeDataProvider(descriptorService);
+    const treeProvider = new DescriptorTreeDataProvider(descriptorService, vscode.Uri.file(
+        path.join(ctx.extensionPath, 'resources', 'websphere.png')));
     const treeView = vscode.window.createTreeView('websphereLooseEar', {
             treeDataProvider: treeProvider,
             showCollapseAll: true
@@ -66,7 +68,7 @@ export async function activate(ctx: vscode.ExtensionContext) {
 
             
             store.onDidChange(s => {
-                const state = s.serverState ?? 'UNKNOWN';
+                const state = s.serverState ?? 'Unknown';   // need to make an enum with these states
                 const connTxt = s.connected ? 'Connected' : 'Disconnected';
                 statusItem.text = `WebSphere: ${state} (${connTxt})`;
                 statusItem.tooltip = `Last checked: ${s.lastChecked ? new Date(s.lastChecked).toLocaleTimeString() : '—'}`;

@@ -8,7 +8,8 @@ export class DescriptorTreeItem extends vscode.TreeItem {
     public readonly label: string,
     public readonly collapsibleState: vscode.TreeItemCollapsibleState,
     public readonly descriptor?: AssemblyDescriptor,
-    public readonly module?: ModuleDescriptor
+    public readonly module?: ModuleDescriptor,
+    public readonly iconPath?: vscode.Uri
   ) {
     super(label, collapsibleState);
     if (module) {
@@ -17,6 +18,7 @@ export class DescriptorTreeItem extends vscode.TreeItem {
     } else {
       this.contextValue = 'server';
       this.description = descriptor?.serverId;
+      this.iconPath = iconPath;
     }
   }
 
@@ -34,7 +36,8 @@ export class DescriptorTreeDataProvider implements vscode.TreeDataProvider<Descr
     private _onDidChangeTreeData = new vscode.EventEmitter<DescriptorTreeItem | undefined>();
     readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
 
-    constructor(private descriptorService: DescriptorService) {
+    constructor(private descriptorService: DescriptorService, public readonly iconPath?: vscode.Uri) {
+        this.iconPath = iconPath;
         descriptorService.onDidChange(() => this.refresh());
     }
 
@@ -54,7 +57,9 @@ export class DescriptorTreeDataProvider implements vscode.TreeDataProvider<Descr
                 new DescriptorTreeItem(
                 'Websphere Application Server 8.5',   // I'll leave this like this for now, but the user should be able to add the server runtime
                 vscode.TreeItemCollapsibleState.Expanded,
-                desc
+                desc,
+                undefined,
+                this.iconPath
                 )
             ]);
         }
