@@ -1,0 +1,22 @@
+{
+  "javaPath": "path/to/java",
+
+  "serverHome": "/blah/bleh/WebSphere/AppServer_8_5",
+
+  "jvmArgs": [
+    "-Xms512m",
+    "-Xmx2048m",
+    "-Dcom.ibm.ws.logging.level=INFO",
+    "-Duser.timezone=UTC"
+  ],
+
+  "classPath": [
+    "classpath"
+  ],
+
+  "systemProps": {
+    "server.name": "server1",
+    "node.name": "Node01",
+    "cell.name": "Cell01"
+  }
+}

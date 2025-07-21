@@ -2,12 +2,57 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Run Fake Server Extension",
+      "name": "Run Extension",
       "type": "extensionHost",
       "request": "launch",
       "runtimeExecutable": "${execPath}",
-      "args": ["--extensionDevelopmentPath=${workspaceFolder}"],
-      "outFiles": ["${workspaceFolder}/out/**/*.js"]
+      "args": [
+        "--extensionDevelopmentPath=${workspaceFolder}"
+      ],
+      "outFiles": [
+        "${workspaceFolder}/dist/**/*.js"
+      ],
+      "preLaunchTask": "npm: compile",
+      "sourceMaps": true,
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "env": {
+        "WEBSPHERE_LOG_LEVEL": "debug"
+      }
+    },
+    {
+      "name": "Run Extension + New VS Code Window (Sandbox)",
+      "type": "extensionHost",
+      "request": "launch",
+      "runtimeExecutable": "${execPath}",
+      "args": [
+        "--extensionDevelopmentPath=${workspaceFolder}",
+        "--user-data-dir=${workspaceFolder}/.vscode-test-userdata"
+      ],
+      "outFiles": [
+        "${workspaceFolder}/dist/**/*.js"
+      ],
+      "preLaunchTask": "npm: compile",
+      "sourceMaps": true
+    },
+    {
+      "name": "Attach to Agent (Java) — Placeholder",
+      "type": "java",
+      "request": "attach",
+      "hostName": "localhost",
+      "port": 5005,
+      "projectName": "websphere-agent",
+      "description": "Start your Java agent with: -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Extension + Agent",
+      "configurations": [
+        "Run Extension",
+        "Attach to Agent (Java) — Placeholder"
+      ]
     }
   ]
 }
