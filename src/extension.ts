@@ -11,6 +11,7 @@ import { DescriptorTreeDataProvider } from './views/DescriptorTreeDataProvider';
 import { registerConfigureLooseEar } from './commands/ConfigureLooseEar';
 import { registerStartServer } from './commands/StartServer';
 import * as path from 'path';
+import { addServer } from './commands/AddServer';
 
 
 
@@ -23,6 +24,20 @@ export async function activate(ctx: vscode.ExtensionContext) {
     const serverProcessService = new ServerProcessService();
     const descriptorService = new DescriptorService();
     const store = new Store();
+    vscode.commands.registerCommand(
+        'websphere.addServer',
+        async () => {
+            try {
+                    await addServer(ctx);
+                    // if (descriptorService.hasServer(input)) {
+                    //     return `Server with ID "${input}" already exists`;
+                    // }
+                    return null;
+                }
+            catch (e:any) {
+                vscode.window.showErrorMessage(`Failed to add server: ${e.message}`);
+            }
+})
     registerConfigureLooseEar(ctx, descriptorService);
     vscode.commands.registerCommand(
         'websphere.stopServer',
@@ -37,7 +52,7 @@ export async function activate(ctx: vscode.ExtensionContext) {
     );
     const treeProvider = new DescriptorTreeDataProvider(descriptorService, vscode.Uri.file(
         path.join(ctx.extensionPath, 'resources', 'websphere.png')));
-    const treeView = vscode.window.createTreeView('websphereLooseEar', {
+    const treeView = vscode.window.createTreeView('websphere', {
             treeDataProvider: treeProvider,
             showCollapseAll: true
         }

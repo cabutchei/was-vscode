@@ -27,15 +27,19 @@ export class DescriptorTreeDataProvider implements vscode.TreeDataProvider<Descr
 
     getChildren(item?: DescriptorTreeItem): Thenable<DescriptorTreeItem[]> {
         const assemblyDescriptor = this.descriptorService.currentServerDescriptor;
+        // if (!item) {
+        //     // Root node
+        //     return Promise.resolve([
+        //         new Server(
+        //         'Websphere Application Server 8.5',   // I'll leave this like this for now, but the user should be able to add the server runtime
+        //         assemblyDescriptor,
+        //         this.iconPath
+        //         )
+        //     ]);
+        // }
+
         if (!item) {
-            // Root node
-            return Promise.resolve([
-                new Server(
-                'Websphere Application Server 8.5',   // I'll leave this like this for now, but the user should be able to add the server runtime
-                assemblyDescriptor,
-                this.iconPath
-                )
-            ]);
+            return Promise.resolve([])
         }
 
         if (item.isServer()) {

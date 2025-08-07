@@ -19,6 +19,18 @@
   "contributes": {
     "commands": [
         {
+            "command": "websphere.addServer",
+            "title": "Add Server",
+            "icon": {
+              "light": "resources/add-server-light.png",
+              "dark": "resources/add-server-dark.png"
+            }
+        },
+        {
+            "command": "websphere.removeServer",
+            "title": "Remove WebSphere Server"
+        },
+        {
             "command": "websphere.startServer",
             "title": "Start server"
         },
@@ -42,46 +54,52 @@
     "viewsContainers": {
         "activitybar": [
             {
-                "id": "websphere",
-                "title": "WebSphere",
-                "icon": "resources/websphere.png"
+                "id": "websphereStatus",
+                "title": "WebSphere"
             }
         ]
     },
     "views": {
         "explorer": [
             {
-                "id": "websphereLooseEar",
+                "id": "websphere",
                 "name": "WebSphere",
                 "icon": "resources/websphere.png"
             }
         ]
     },
     "menus": {
+        "view/title": [
+            {
+                "command": "websphere.addServer",
+                "when": "view == websphere",
+                "group": "navigation"
+            }
+        ],
         "view/item/context": [
             {
                 "command": "websphere.configureLooseEar",
-                "when": "view == websphereLooseEar && viewItem == server",
+                "when": "view == websphere && viewItem == server",
                 "group": "navigation"
             },
             {
                 "command": "websphere.startServer",
-                "when": "view == websphereLooseEar && viewItem == server",
+                "when": "view == websphere && viewItem == server",
                 "group": "navigation"
             },
             {
                 "command": "websphere.stopServer",
-                "when": "view == websphereLooseEar && viewItem == server",
+                "when": "view == websphere && viewItem == server",
                 "group": "navigation"
             },
             {
                 "command": "websphere.stopServer",
-                "when": "view == websphereLooseEar && viewItem == server",
+                "when": "view == websphere && viewItem == server",
                 "group": "navigation"
             },
             {
                 "command": "websphere.removeModule",
-                "when": "view == websphereLooseEar && viewItem == module",
+                "when": "view == websphere && viewItem == module",
                 "group": "navigation"
             }
         ]
