@@ -1,3 +1,4 @@
+import * as vscode from 'vscode';
 import { v4 as uuid } from 'uuid';
 import { InboundMessage, OutboundMessage, RequestOptions } from '../protocol/messages';
 import { logger } from '../util/logger';
@@ -15,6 +16,8 @@ export class AgentConnection {
     private pending = new Map<string, Pending>();
     private negotiatedVersion = 1;
     private connected = false;
+    private _onEvent = new vscode.EventEmitter<InboundMessage>();
+    public readonly onEvent = this._onEvent.event;
 
     constructor(private transport: ITransport) {
         transport.onData(data => this.onData(data));
@@ -51,6 +54,22 @@ export class AgentConnection {
         return this.sendRequest(req, { timeoutMs: 5000 });
     }
 
+    async startAplication(): Promise<InboundMessage> {
+        const id = uuid();
+        const req: OutboundMessage = {
+            type: 'request', opcode: 'Application.Start', version: this.negotiatedVersion, id, timestamp: Date.now(), payload: { applicationId: "silce"}
+        };
+        return this.sendRequest(req, { timeoutMs: 500});
+    }
+
+    async stopApplication(): Promise<InboundMessage> {
+        const id = uuid();
+        const req: OutboundMessage = {
+            type: 'request', opcode: 'Application.Stop', version: this.negotiatedVersion, id, timestamp: Date.now(), payload: { applicationId: "silce"}
+        };
+        return this.sendRequest(req, { timeoutMs: 500});
+    }
+
     private sendRequest(msg: OutboundMessage, opts: RequestOptions): Promise<InboundMessage> {
         return new Promise((resolve, reject) => {
         const str = JSON.stringify(msg) + '\n';
@@ -74,11 +93,16 @@ export class AgentConnection {
         try {
             const msg: InboundMessage = JSON.parse(raw);
             logger.debug('RECV', msg);
-            if (msg.type === 'response' && msg.id && this.pending.has(msg.id)) {
-            const pending = this.pending.get(msg.id)!;
-                clearTimeout(pending.timeout); pending.resolve(msg); this.pending.delete(msg.id);
-            } else {
-            // ignore events for now 
+            switch (msg.type) {
+                case 'response':
+                    if (msg.id && this.pending.has(msg.id)) {
+                        const pending = this.pending.get(msg.id)!;
+                        clearTimeout(pending.timeout); pending.resolve(msg); this.pending.delete(msg.id);
+                    }
+                    break;
+                case 'event':
+                    this._onEvent.fire(msg);
+
             }
         } catch (e:any) {
             logger.error('Failed to parse message', { raw, error: e.message });

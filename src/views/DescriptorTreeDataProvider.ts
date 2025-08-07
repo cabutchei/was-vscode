@@ -1,35 +1,11 @@
 import * as vscode from 'vscode';
 import { DescriptorService } from '../services/DescriptorService';
-import { AssemblyDescriptor, ModuleDescriptor } from '../models/AssemblyDescriptor';
+import { ApplicationDescriptor, AssemblyDescriptor, ModuleDescriptor } from '../models/AssemblyDescriptor';
+import { Server } from './Server'
+import { EAR } from './EAR'
+import { Module } from './Module'
+import { DescriptorTreeItem } from './DescriptorTreeItem';
 
-// this class represents the UI element
-export class DescriptorTreeItem extends vscode.TreeItem {
-  constructor(
-    public readonly label: string,
-    public readonly collapsibleState: vscode.TreeItemCollapsibleState,
-    public readonly descriptor?: AssemblyDescriptor,
-    public readonly module?: ModuleDescriptor,
-    public readonly iconPath?: vscode.Uri
-  ) {
-    super(label, collapsibleState);
-    if (module) {
-      this.contextValue = 'module';
-      this.description = module.type + (module.contextRoot ? ` @ ${module.contextRoot}` : '');
-    } else {
-      this.contextValue = 'server';
-      this.description = descriptor?.serverId;
-      this.iconPath = iconPath;
-    }
-  }
-
-    isServer(): boolean {
-        return this.contextValue === 'server';
-    }
-
-    hasDescriptor(): boolean {
-        return Boolean(this.descriptor);
-    }
-}
 
 
 export class DescriptorTreeDataProvider implements vscode.TreeDataProvider<DescriptorTreeItem> {
@@ -50,31 +26,46 @@ export class DescriptorTreeDataProvider implements vscode.TreeDataProvider<Descr
     }
 
     getChildren(item?: DescriptorTreeItem): Thenable<DescriptorTreeItem[]> {
-        const desc = this.descriptorService.current;
+        const assemblyDescriptor = this.descriptorService.currentServerDescriptor;
         if (!item) {
             // Root node
             return Promise.resolve([
-                new DescriptorTreeItem(
+                new Server(
                 'Websphere Application Server 8.5',   // I'll leave this like this for now, but the user should be able to add the server runtime
-                vscode.TreeItemCollapsibleState.Expanded,
-                desc,
-                undefined,
+                assemblyDescriptor,
                 this.iconPath
                 )
             ]);
         }
 
-        if (item.isServer() && item.descriptor) {
-            const items = item.descriptor.modules.map(
-                module => {
-                    return new DescriptorTreeItem(
-                        module.id,
-                        vscode.TreeItemCollapsibleState.None,
-                        undefined,
-                        module
-                )
+        if (item.isServer()) {
+            item = item as Server;
+            const assemblyDescriptor = this.descriptorService.currentServerDescriptor;    // change name later, this describes the server ear deployment
+            const items = assemblyDescriptor.modules.map(
+                app => {
+                    app = (app as ApplicationDescriptor);
+                    return new EAR(
+                        app.id,
+                        assemblyDescriptor,
+                        app
+                );
             }
         );
+            return Promise.resolve(items);
+        }
+
+        if (item.isApplication()) {
+            item = item as EAR;
+            const assemblyDescriptor = this.descriptorService.current
+            const items = assemblyDescriptor.modules.map(
+                module => {
+                    module = (module as ModuleDescriptor)
+                    return new Module(
+                        module.id,
+                        module
+                    )
+                }
+            );
             return Promise.resolve(items);
         }
         

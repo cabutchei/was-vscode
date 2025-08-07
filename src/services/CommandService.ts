@@ -17,12 +17,18 @@ export class CommandService {
 
     async refreshServerStatus() {
         const resp = await this.conn.serverStatus();
-        if (resp.type === 'response' && resp.success && resp.payload) {
-        this.store.update({ serverState: (resp.payload as any).state, lastChecked: Date.now() });   // do I standardize the status names on the server side?
+        switch(resp.type){
+            case 'response':
+                if (resp.success && resp.payload) {
+                    this.store.update({ serverState: (resp.payload as any).state, lastChecked: Date.now() });   // do I standardize the status names on the server side?
+                }
+                break;
+            case 'event':
+                break;
         }
     }
 
-    async startServer(serverId: string) {
+    async startServer(serverId: string) {   // should be a tcp request too
         const cfg = vscode.workspace.getConfiguration('websphere');
         const javaPath = cfg.get('server.javaPath', null);
         const serverHome = cfg.get('server.home', null);
@@ -49,6 +55,10 @@ export class CommandService {
         }
 
     async stopServer(serverId: string) {
-        await this.processSvc.stop(serverId);
+        await this.processSvc.stop(serverId);   // change of plans, management server should control the process. TODO: change this to a tcp request
+    }
+
+    async startApplication(appId: string) {
+        const resp = await this.conn.startAplication();
     }
 }

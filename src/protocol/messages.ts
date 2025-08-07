@@ -44,7 +44,38 @@ export interface ServerStatusResponse {
 }
 
 
-export type OutboundMessage = HandshakeRequest | ServerStatusRequest;
+export interface StartApplicationRequest {
+    type: 'request';
+    opcode: 'Application.Start';
+    version: number;
+    id: string;
+    payload?: {
+        applicationId: string
+    };
+    error?: {
+        code: string;
+        message: string
+    };
+    timestamp: number;
+}
+
+export interface StopApplicationRequest {
+    type: 'request';
+    opcode: 'Application.Stop';
+    version: number;
+    id: string;
+    payload?: {
+        applicationId: string
+    };
+    error?: {
+        code: string;
+        message: string
+    };
+    timestamp: number;
+}
+
+
+export type OutboundMessage = HandshakeRequest | ServerStatusRequest | StartApplicationRequest | StopApplicationRequest;
 export type InboundMessage = HandshakeResponse | ServerStatusResponse | { type: 'event'; opcode: string; version: number; id?: string; timestamp: number; payload: any };
 
 export interface RequestOptions { timeoutMs?: number; }

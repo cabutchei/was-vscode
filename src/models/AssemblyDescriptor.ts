@@ -1,3 +1,9 @@
+export interface ApplicationDescriptor {
+  id: string;
+  type: 'EAR';
+  sourcePath: string;
+  contextRoot?: string;
+}
 export interface ModuleDescriptor {
   id: string
   type: 'EJB'|'WAR';
@@ -7,5 +13,5 @@ export interface ModuleDescriptor {
 
 export interface AssemblyDescriptor {
   serverId: string;
-  modules: ModuleDescriptor[];
+  modules: ApplicationDescriptor[] | ModuleDescriptor[];
 }

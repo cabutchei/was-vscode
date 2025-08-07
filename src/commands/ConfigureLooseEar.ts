@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { DescriptorService } from '../services/DescriptorService';
-import { ModuleDescriptor } from '../models/AssemblyDescriptor';
+import { ApplicationDescriptor, ModuleDescriptor } from '../models/AssemblyDescriptor';
 
 // the goal here is to support loose deployment. The user will be able to configure the package structure and deployment assembly. I still need to deal
 // with generating looseconfig files for websphere
@@ -16,6 +16,20 @@ export async function configureLooseEar(descriptorService: DescriptorService) {
     descriptorService.updateServerInfo(serverId);
 
     const folders = vscode.workspace.workspaceFolders?.map(folder => folder.name) || [];
+    const appId = await vscode.window.showQuickPick(
+        folders, 
+        { placeHolder: 'Select application' }
+    );
+    if (!appId) return;
+
+    const application: ApplicationDescriptor = {
+        id: appId,
+        type: 'EAR',
+        sourcePath: appId,
+        contextRoot: "blah"
+    }
+    descriptorService.addApp(application);
+
     const moduleId = await vscode.window.showQuickPick(
         folders, 
         { placeHolder: 'Select module to add to EAR' }
@@ -48,6 +62,8 @@ export async function configureLooseEar(descriptorService: DescriptorService) {
         `Added module ${moduleId} (${type})${contextRoot ? `${contextRoot}` : ''}`
     );
 }
+
+// export async function configureApplicationV(descriptorService: DescriptorService)
 
 
     export function registerConfigureLooseEar(context: vscode.ExtensionContext, descriptorService: DescriptorService) {

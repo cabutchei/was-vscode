@@ -75,6 +75,11 @@
                 "group": "navigation"
             },
             {
+                "command": "websphere.stopServer",
+                "when": "view == websphereLooseEar && viewItem == server",
+                "group": "navigation"
+            },
+            {
                 "command": "websphere.removeModule",
                 "when": "view == websphereLooseEar && viewItem == module",
                 "group": "navigation"
