@@ -8,7 +8,7 @@ export interface SimpleState {
   lastChecked?: number;
 }
 
-export class Store {
+export class SMStore {
   private state: SimpleState = { connected: false };
   private emitter = new vscode.EventEmitter<SimpleState>();
   readonly onDidChange = this.emitter.event;

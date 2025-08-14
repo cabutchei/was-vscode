@@ -5,7 +5,7 @@ import { DescriptorTreeItem } from './DescriptorTreeItem';
 
 
 
-export class EAR extends DescriptorTreeItem {
+export class Application extends DescriptorTreeItem {
   constructor(
     public readonly label: string,
     public readonly assemblyDescriptor?: AssemblyDescriptor,

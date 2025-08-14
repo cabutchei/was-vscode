@@ -1,5 +1,5 @@
 import { AgentConnection } from '../connection/AgentConnection';
-import { Store } from './Store';
+import { SMStore } from './Store';
 import { InboundMessage } from '../protocol/messages';
 
 
@@ -7,7 +7,7 @@ import { InboundMessage } from '../protocol/messages';
 export class NotificationService {
   constructor(
     private conn: AgentConnection,
-    private store: Store
+    private store: SMStore
   ) {
     conn.onEvent(this.handleEvent.bind(this));
   }

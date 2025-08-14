@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { v4 as uuid } from 'uuid';
-import { InboundMessage, OutboundMessage, RequestOptions } from '../protocol/messages';
+import { HandshakeResponse, InboundMessage, OutboundMessage, RequestOptions, ServerInfoRequest } from '../protocol/messages';
 import { logger } from '../util/logger';
 import { ITransport } from './Transport';
 
@@ -37,13 +37,22 @@ export class AgentConnection {
         type: 'request', opcode: 'Handshake.Request', version: 1, id, timestamp: Date.now(),
         payload: { supported: [1] }
         };
-        const resp = await this.sendRequest(req, { timeoutMs: 5000 });
+        const resp = await this.sendRequest(req, { timeoutMs: 5000 }) as HandshakeResponse
         if (resp.type !== 'response' || !('payload' in resp) || !resp.success) {
-        throw new Error('Handshake failed');
+            throw new Error('Handshake failed');
         }
         this.negotiatedVersion = (resp as any).payload.selected;
         this.connected = true;
         logger.info('Handshake success', { version: this.negotiatedVersion });
+    }
+
+    async getServerInfo(path: string): Promise<InboundMessage> {
+        const id = uuid();
+        const req: ServerInfoRequest = {
+            type: 'request', opcode: 'Server.Info', id: id,
+            payload: { path: path }
+        }
+        return this.sendRequest(req, { timeoutMs: 5000 })
     }
 
     async serverStatus(): Promise<InboundMessage> {

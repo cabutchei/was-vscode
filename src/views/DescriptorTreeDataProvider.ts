@@ -1,10 +1,12 @@
 import * as vscode from 'vscode';
+import * as path from 'path';
 import { DescriptorService } from '../services/DescriptorService';
 import { ApplicationDescriptor, AssemblyDescriptor, ModuleDescriptor } from '../models/AssemblyDescriptor';
 import { Server } from './Server'
-import { EAR } from './EAR'
+import { Application } from './EAR'
 import { Module } from './Module'
 import { DescriptorTreeItem } from './DescriptorTreeItem';
+import { ServerStore } from '../services/ServerStore';
 
 
 
@@ -12,13 +14,29 @@ export class DescriptorTreeDataProvider implements vscode.TreeDataProvider<Descr
     private _onDidChangeTreeData = new vscode.EventEmitter<DescriptorTreeItem | undefined>();
     readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
 
-    constructor(private descriptorService: DescriptorService, public readonly iconPath?: vscode.Uri) {
+    private serverElements = new Map<string, Server>();
+    private newServer: string | null;
+
+    constructor(private context: vscode.ExtensionContext, private descriptorService: DescriptorService, private serverStore: ServerStore, public readonly iconPath?: vscode.Uri) {
+        this.context = context;
         this.iconPath = iconPath;
+        this.serverStore = serverStore;
         descriptorService.onDidChange(() => this.refresh());
+        serverStore.onDidChange((e) => {
+            const element = this.serverElements.get(e.id);
+            this.newServer = e.id;
+            // If we already have a node for this server, refresh just that node;
+            // otherwise, refresh the root so it appears.
+            this._onDidChangeTreeData.fire(element ?? undefined);
+        }
+    );
+
+        this.newServer = null;
+
     }
 
-    refresh(): void {
-        this._onDidChangeTreeData.fire(undefined);
+    refresh(element?: DescriptorTreeItem): void {
+        this._onDidChangeTreeData.fire(element);
     }
 
     getTreeItem(item: DescriptorTreeItem): vscode.TreeItem {
@@ -27,20 +45,42 @@ export class DescriptorTreeDataProvider implements vscode.TreeDataProvider<Descr
 
     getChildren(item?: DescriptorTreeItem): Thenable<DescriptorTreeItem[]> {
         const assemblyDescriptor = this.descriptorService.currentServerDescriptor;
-        // if (!item) {
-        //     // Root node
-        //     return Promise.resolve([
-        //         new Server(
-        //         'Websphere Application Server 8.5',   // I'll leave this like this for now, but the user should be able to add the server runtime
-        //         assemblyDescriptor,
-        //         this.iconPath
-        //         )
-        //     ]);
-        // }
-
-        if (!item) {
+        if (this.serverStore.empty()) {
             return Promise.resolve([])
         }
+
+        if (!item) {
+            if (this.newServer) {
+                const server = this.serverStore.getServer(this.newServer);
+                const serverType = this.serverStore.getServerType(this.newServer);
+                let iconPath: vscode.Uri | undefined;
+
+                if(!serverType) {   // TODO: handle this better
+                    return Promise.resolve([]);
+                }
+
+                if(serverType?.icon) {
+                    iconPath = vscode.Uri.file(
+                        path.join(this.context.extensionPath, serverType.icon)
+                    );
+                }
+
+                if (!server) {
+                    return Promise.resolve([]);
+                }
+
+                this.newServer = null;
+                return Promise.resolve([
+                    new Server(
+                    server.name,
+                    assemblyDescriptor,
+                    iconPath
+                    )
+                ]);
+        } else {
+            return Promise.resolve([]);
+        }
+    }
 
         if (item.isServer()) {
             item = item as Server;
@@ -48,7 +88,7 @@ export class DescriptorTreeDataProvider implements vscode.TreeDataProvider<Descr
             const items = assemblyDescriptor.modules.map(
                 app => {
                     app = (app as ApplicationDescriptor);
-                    return new EAR(
+                    return new Application(
                         app.id,
                         assemblyDescriptor,
                         app
@@ -59,7 +99,7 @@ export class DescriptorTreeDataProvider implements vscode.TreeDataProvider<Descr
         }
 
         if (item.isApplication()) {
-            item = item as EAR;
+            item = item as Application;
             const assemblyDescriptor = this.descriptorService.current
             const items = assemblyDescriptor.modules.map(
                 module => {

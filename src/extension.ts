@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { ITransport, StdioTransport } from './connection/Transport';
 import { TcpTransport } from './connection/TcpTransport';
 import { AgentConnection } from './connection/AgentConnection';
-import { Store } from './services/Store';
+import { SMStore } from './services/Store';
 import { logger, LogLevel } from './util/logger';
 import { DescriptorService } from './services/DescriptorService';
 import { CommandService } from './services/CommandService';
@@ -12,6 +12,8 @@ import { registerConfigureLooseEar } from './commands/ConfigureLooseEar';
 import { registerStartServer } from './commands/StartServer';
 import * as path from 'path';
 import { addServer } from './commands/AddServer';
+import { ServerStore } from './services/ServerStore';
+import { ServerPersistence } from './services/ServerPersistence';
 
 
 
@@ -20,24 +22,26 @@ let statusItem: vscode.StatusBarItem;
 
 export async function activate(ctx: vscode.ExtensionContext) {
     logger.setLevel(LogLevel.DEBUG);
-    
+
+    const storageUri = ctx.storageUri;
+    if (!storageUri) {
+        vscode.window.showErrorMessage('Open a folder/workspace first.');
+        return;
+    }
+
     const serverProcessService = new ServerProcessService();
     const descriptorService = new DescriptorService();
-    const store = new Store();
-    vscode.commands.registerCommand(
-        'websphere.addServer',
-        async () => {
-            try {
-                    await addServer(ctx);
-                    // if (descriptorService.hasServer(input)) {
-                    //     return `Server with ID "${input}" already exists`;
-                    // }
-                    return null;
-                }
-            catch (e:any) {
-                vscode.window.showErrorMessage(`Failed to add server: ${e.message}`);
-            }
-})
+    const store = new SMStore();
+    const serverStore = new ServerStore();
+    const serverPersistence = new ServerPersistence(ctx);
+
+    serverPersistence.init().then(serverPersistence.list).then(servers => {
+        servers.forEach(server => {
+            serverStore.addServer(server);
+        }
+    )
+}
+)
     registerConfigureLooseEar(ctx, descriptorService);
     vscode.commands.registerCommand(
         'websphere.stopServer',
@@ -50,7 +54,7 @@ export async function activate(ctx: vscode.ExtensionContext) {
             }
         }
     );
-    const treeProvider = new DescriptorTreeDataProvider(descriptorService, vscode.Uri.file(
+    const treeProvider = new DescriptorTreeDataProvider(ctx, descriptorService, serverStore, vscode.Uri.file(
         path.join(ctx.extensionPath, 'resources', 'websphere.png')));
     const treeView = vscode.window.createTreeView('websphere', {
             treeDataProvider: treeProvider,
@@ -101,6 +105,18 @@ export async function activate(ctx: vscode.ExtensionContext) {
             
     try {
         await commandService.initialize();
+
+        vscode.commands.registerCommand(
+            'websphere.addServer',
+            async () => {
+                try {
+                        await addServer(ctx, commandService, descriptorService, serverStore);
+                        return null;
+                    }
+                catch (e:any) {
+                    vscode.window.showErrorMessage(`Failed to add server: ${e.message}`);
+                }
+    })
         await commandService.refreshServerStatus();
     } catch (e:any) {
         vscode.window.showErrorMessage('WebSphere agent initialization failed: ' + e.message);

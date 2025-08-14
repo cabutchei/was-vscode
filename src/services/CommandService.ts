@@ -1,13 +1,15 @@
 import * as vscode from 'vscode';
 import { AgentConnection } from '../connection/AgentConnection';
-import { Store } from './Store';
+import { SMStore } from './Store';
 import { ServerProcessService } from './ServerProcessService';
+import { Server } from 'http';
+import { ServerInfoResponse, ServerInfoResponsePayload, ServerStatusResponse } from '../protocol/messages';
 
 
 export class CommandService {
     constructor(
         private conn: AgentConnection,
-        private store: Store,
+        private store: SMStore,
         private processSvc: ServerProcessService) {}
 
     async initialize() {
@@ -16,16 +18,10 @@ export class CommandService {
     }
 
     async refreshServerStatus() {
-        const resp = await this.conn.serverStatus();
-        switch(resp.type){
-            case 'response':
+        const resp = await this.conn.serverStatus() as ServerStatusResponse;
                 if (resp.success && resp.payload) {
                     this.store.update({ serverState: (resp.payload as any).state, lastChecked: Date.now() });   // do I standardize the status names on the server side?
                 }
-                break;
-            case 'event':
-                break;
-        }
     }
 
     async startServer(serverId: string) {   // should be a tcp request too
@@ -60,5 +56,19 @@ export class CommandService {
 
     async startApplication(appId: string) {
         const resp = await this.conn.startAplication();
+    }
+
+    async getServerInfo(path: string): Promise<ServerInfoResponsePayload>
+    async getServerInfo(path: vscode.Uri): Promise<ServerInfoResponsePayload>
+    async getServerInfo(value: string | vscode.Uri): Promise<ServerInfoResponsePayload> {
+        let path: string;
+        if (value instanceof vscode.Uri) {
+            value = value.fsPath;
+        }
+        path = value;
+        const resp = await this.conn.getServerInfo(path) as ServerInfoResponse;
+        return resp.payload;
+
+
     }
 }
