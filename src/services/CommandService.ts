@@ -2,7 +2,6 @@ import * as vscode from 'vscode';
 import { AgentConnection } from '../connection/AgentConnection';
 import { SMStore } from './Store';
 import { ServerProcessService } from './ServerProcessService';
-import { Server } from 'http';
 import { ServerInfoResponse, ServerInfoResponsePayload, ServerStatusResponse } from '../protocol/messages';
 
 
@@ -25,6 +24,7 @@ export class CommandService {
     }
 
     async startServer(serverId: string) {   // should be a tcp request too
+        vscode.window.showInformationMessage(`Starting server ${serverId}...`);
         const cfg = vscode.workspace.getConfiguration('websphere');
         const javaPath = cfg.get('server.javaPath', null);
         const serverHome = cfg.get('server.home', null);
@@ -38,10 +38,11 @@ export class CommandService {
         if (!logFile) {
             throw new Error('`websphere.server.home` must be set');
         }
+        const startScript = '-cp ' + serverHome + ' MockServer'; // TODO: make this configurable
         const proc = await this.processSvc.launch(
             serverId,
             javaPath,
-            serverHome,
+            startScript,
             logFile
         );
 

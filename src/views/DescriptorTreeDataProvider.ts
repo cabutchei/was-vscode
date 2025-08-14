@@ -70,13 +70,14 @@ export class DescriptorTreeDataProvider implements vscode.TreeDataProvider<Descr
                 }
 
                 this.newServer = null;
-                return Promise.resolve([
-                    new Server(
+
+                const newServerView = new Server(
+                    server.id,
                     server.name,
                     assemblyDescriptor,
                     iconPath
-                    )
-                ]);
+                );
+                return Promise.resolve([newServerView]);
         } else {
             return Promise.resolve([]);
         }

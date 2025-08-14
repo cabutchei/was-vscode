@@ -54,6 +54,7 @@ export async function activate(ctx: vscode.ExtensionContext) {
             }
         }
     );
+    
     const treeProvider = new DescriptorTreeDataProvider(ctx, descriptorService, serverStore, vscode.Uri.file(
         path.join(ctx.extensionPath, 'resources', 'websphere.png')));
     const treeView = vscode.window.createTreeView('websphere', {

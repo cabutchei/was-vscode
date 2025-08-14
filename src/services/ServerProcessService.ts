@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { spawn, ChildProcess } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path'
+import { logger } from '../util/logger';
 
 // this class deals directly with the server process
 
@@ -17,7 +18,13 @@ export class ServerProcessService {
         this.output.clear();
         this.output.show(true);
         this.output.appendLine(`> ${javaPath} ${startScript} ${serverId}`);
-        const proc = spawn(javaPath, [ startScript, serverId ], { cwd: path.dirname(startScript) });
+        // const proc = spawn(javaPath, [ startScript, serverId ], { cwd: path.dirname(startScript) });
+        const args: string | undefined = vscode.workspace.getConfiguration('websphere').get('server.home');
+        if (!args) {
+            throw new Error('`websphere.server.home` must be set');
+        }
+        // javaPath = '/Users/cabutchei/.sdkman/candidates/java/current/bin/java';
+        const proc = spawn(javaPath, [ '-cp', args, 'MockServer', serverId ], { cwd: path.dirname(args)});  // fails when I omit cwd. Why?
         this.procs.set(serverId, proc);
         proc.once('close', () => {
             this.procs.delete(serverId);
@@ -25,8 +32,9 @@ export class ServerProcessService {
         });
         proc.on('error', e => this.output.appendLine(`✖ ${e.message}`));
         proc.on('close', code => {
-        this.stopTailing(serverId);
-        this.output.appendLine(code === 0? 'Server exited cleanly' : `Server exited with code ${code}`);
+            logger.info('why?');
+            this.stopTailing(serverId);
+            this.output.appendLine(code === 0? 'Server exited cleanly' : `Server exited with code ${code}`);
         });
 
         this.startTailing(serverId, logFile);
