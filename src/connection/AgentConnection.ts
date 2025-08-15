@@ -55,6 +55,15 @@ export class AgentConnection {
         return this.sendRequest(req, { timeoutMs: 5000 })
     }
 
+    async addServer(serverId: string, serverPath: string): Promise<InboundMessage> {
+        const id = uuid();
+        const req: OutboundMessage = {
+            type: 'request', opcode: 'Server.Add', version: this.negotiatedVersion,
+            id, timestamp: Date.now(), payload: { id: serverId, path: serverPath }
+        };
+        return this.sendRequest(req, { timeoutMs: 5000 });
+    }
+
     async serverStatus(): Promise<InboundMessage> {
         const id = uuid();
         const req: OutboundMessage = {
@@ -62,6 +71,14 @@ export class AgentConnection {
         };
         return this.sendRequest(req, { timeoutMs: 5000 });
     }
+
+    // async startServer(): Promise<InboundMessage> {
+    //     const id = uuid();
+    //     const req: OutboundMessage = {
+    //         type: 'request', opcode: 'Server.Start', version: this.negotiatedVersion, id, timestamp: Date.now(), payload: {}
+    //     };
+    //     return this.sendRequest(req, { timeoutMs: 5000 });
+    // }
 
     async startAplication(): Promise<InboundMessage> {
         const id = uuid();

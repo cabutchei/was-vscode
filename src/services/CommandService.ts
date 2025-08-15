@@ -16,6 +16,22 @@ export class CommandService {
         this.store.update({ connected: true });
     }
 
+    async addServer(serverId: string, serverPath: string) {
+        // const server = this.store.getServer(serverId);
+        // if (!server) {
+        //     vscode.window.showErrorMessage(`Server with ID ${serverId} already exists.`);
+        //     return;
+        // }
+        this.conn.addServer(
+            serverId,
+            serverPath
+        ).then(() => {
+            vscode.window.showInformationMessage(`Server ${serverId} added successfully.`);
+        }).catch(err => {
+            vscode.window.showErrorMessage(`Failed to add server: ${err.message}`);
+        });
+    }
+
     async refreshServerStatus() {
         const resp = await this.conn.serverStatus() as ServerStatusResponse;
                 if (resp.success && resp.payload) {

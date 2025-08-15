@@ -65,6 +65,7 @@ export async function addServer(context: vscode.ExtensionContext, commandService
 
             serverStore.setServerType(server.id, serverType);
             serverStore.addServer(server)
+            commandService.addServer(server.id, serverPath);
         } else {
             vscode.window.showWarningMessage('No folder selected.');
         }

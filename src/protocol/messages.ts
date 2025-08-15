@@ -47,6 +47,28 @@ export interface ServerInfoResponsePayload {
     profiles: string[];
 }
 
+export interface AddServerRequest {
+    type: 'request';
+    opcode: 'Server.Add';
+    version: number;
+    id: string;
+    payload: {
+        id: string;
+        path: string;
+    };
+    timestamp: number;
+}
+
+export interface AddServerResponse {
+    type: 'response';
+    opcode: 'Server.Add';
+    version: number;
+    id: string;
+    success: boolean;
+    error?: { code: string; message: string };
+    timestamp: number;
+}
+
 export interface ServerStatusRequest {
     type: 'request';
     opcode: 'Server.Status';
@@ -100,7 +122,7 @@ export interface StopApplicationRequest {
 }
 
 
-export type OutboundMessage = HandshakeRequest | ServerInfoRequest | ServerStatusRequest | StartApplicationRequest | StopApplicationRequest;
-export type InboundMessage = HandshakeResponse | ServerInfoResponse | ServerStatusResponse | { type: 'event'; opcode: string; version: number; id?: string; timestamp: number; payload: any };
+export type OutboundMessage = HandshakeRequest | ServerInfoRequest | AddServerRequest | ServerStatusRequest | StartApplicationRequest | StopApplicationRequest;
+export type InboundMessage = HandshakeResponse | ServerInfoResponse | AddServerResponse | ServerStatusResponse | { type: 'event'; opcode: string; version: number; id?: string; timestamp: number; payload: any };
 
 export interface RequestOptions { timeoutMs?: number; }
