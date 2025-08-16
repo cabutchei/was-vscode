@@ -69,6 +69,48 @@ export interface AddServerResponse {
     timestamp: number;
 }
 
+export interface StartServerRequest {
+    type: 'request';
+    opcode: 'Server.Start';
+    version: number;
+    id: string;
+    payload: { serverId: string };
+    timestamp: number;
+    error?: { code: string; message: string };
+}
+
+export interface StartServerResponse {
+    type: 'response';
+    opcode: 'Server.Start';
+    version: number;
+    id: string;
+    success: boolean;
+    payload?: { serverId: string };
+    error?: { code: string; message: string };
+    timestamp: number;
+}
+
+export interface StopServerResponse {
+    type: 'response';
+    opcode: 'Server.Stop';
+    version: number;
+    id: string;
+    success: boolean;
+    payload?: { serverId: string };
+    error?: { code: string; message: string };
+    timestamp: number;
+}
+
+export interface StopServerRequest {
+    type: 'request';
+    opcode: 'Server.Stop';
+    version: number;
+    id: string;
+    payload: { serverId: string };
+    timestamp: number;
+    error?: { code: string; message: string };
+}
+
 export interface ServerStatusRequest {
     type: 'request';
     opcode: 'Server.Status';
@@ -122,7 +164,7 @@ export interface StopApplicationRequest {
 }
 
 
-export type OutboundMessage = HandshakeRequest | ServerInfoRequest | AddServerRequest | ServerStatusRequest | StartApplicationRequest | StopApplicationRequest;
-export type InboundMessage = HandshakeResponse | ServerInfoResponse | AddServerResponse | ServerStatusResponse | { type: 'event'; opcode: string; version: number; id?: string; timestamp: number; payload: any };
+export type OutboundMessage = HandshakeRequest | ServerInfoRequest | AddServerRequest | ServerStatusRequest | StartServerRequest | StopServerRequest | StartApplicationRequest | StopApplicationRequest;
+export type InboundMessage = HandshakeResponse | ServerInfoResponse | AddServerResponse | ServerStatusResponse | StartServerResponse | StopServerResponse | { type: 'event'; opcode: string; version: number; id?: string; timestamp: number; payload: any };
 
 export interface RequestOptions { timeoutMs?: number; }

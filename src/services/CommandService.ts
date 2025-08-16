@@ -41,34 +41,40 @@ export class CommandService {
 
     async startServer(serverId: string) {   // should be a tcp request too
         vscode.window.showInformationMessage(`Starting server ${serverId}...`);
-        const cfg = vscode.workspace.getConfiguration('websphere');
-        const javaPath = cfg.get('server.javaPath', null);
-        const serverHome = cfg.get('server.home', null);
-        const logFile = cfg.get('server.logFile', null);
-        if (!serverHome) {
-            throw new Error('`websphere.server.home` must be set');
-        }
-        if (!javaPath) {
-            throw new Error('`websphere.server.home` must be set');
-        }
-        if (!logFile) {
-            throw new Error('`websphere.server.home` must be set');
-        }
-        const startScript = '-cp ' + serverHome + ' MockServer'; // TODO: make this configurable
-        const proc = await this.processSvc.launch(
-            serverId,
-            javaPath,
-            startScript,
-            logFile
-        );
+        // const cfg = vscode.workspace.getConfiguration('websphere');
+        // const javaPath = cfg.get('server.javaPath', null);
+        // const serverHome = cfg.get('server.home', null);
+        // const logFile = cfg.get('server.logFile', null);
+        // if (!serverHome) {
+        //     throw new Error('`websphere.server.home` must be set');
+        // }
+        // if (!javaPath) {
+        //     throw new Error('`websphere.server.home` must be set');
+        // }
+        // if (!logFile) {
+        //     throw new Error('`websphere.server.home` must be set');
+        // }
+        // const startScript = '-cp ' + serverHome + ' MockServer'; // TODO: make this configurable
+        // const proc = await this.processSvc.launch(
+        //     serverId,
+        //     javaPath,
+        //     startScript,
+        //     logFile
+        // );
 
-        return new Promise<void>((resolve, reject) => {
-            proc.on('close', code => code === 0 ? resolve() : reject(new Error('Start failed')));
-        });
-        }
+        // return new Promise<void>((resolve, reject) => {
+        //     proc.on('close', code => code === 0 ? resolve() : reject(new Error('Start failed')));
+        // });
+        await this.conn.startServer(serverId)
+            .then(() => vscode.window.showInformationMessage(`Server ${serverId} started successfully.`))
+            .catch(err => vscode.window.showErrorMessage(`Failed to start server ${serverId}: ${err.message}`));
+    }
 
     async stopServer(serverId: string) {
-        await this.processSvc.stop(serverId);   // change of plans, management server should control the process. TODO: change this to a tcp request
+        // await this.processSvc.stop(serverId);   // change of plans, management server should control the process. TODO: change this to a tcp request
+        await this.conn.stopServer(serverId)
+            .then(() => vscode.window.showInformationMessage(`Server ${serverId} stopped successfully.`))
+            .catch(err => vscode.window.showErrorMessage(`Failed to stop server ${serverId}: ${err.message}`));
     }
 
     async startApplication(appId: string) {

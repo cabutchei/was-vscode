@@ -35,3 +35,21 @@ export function registerStartServer(context: vscode.ExtensionContext, commandSer
         )
     )
 }
+
+
+export function registerStopServer(context: vscode.ExtensionContext, commandService: CommandService, descriptorService: DescriptorService) {
+    context.subscriptions.push(
+        vscode.commands.registerCommand(
+            'websphere.stopServer',
+            async (serverItem: serverView.Server) => {
+                const serverId = serverItem.id;
+                try {
+                    await commandService.stopServer(serverId);
+                    vscode.window.showInformationMessage('Server stopped.');
+                } catch (e:any) {
+                    vscode.window.showErrorMessage(`Failed to stop server: ${e.message}`);
+                }
+            }
+        )
+    )
+}

@@ -72,13 +72,21 @@ export class AgentConnection {
         return this.sendRequest(req, { timeoutMs: 5000 });
     }
 
-    // async startServer(): Promise<InboundMessage> {
-    //     const id = uuid();
-    //     const req: OutboundMessage = {
-    //         type: 'request', opcode: 'Server.Start', version: this.negotiatedVersion, id, timestamp: Date.now(), payload: {}
-    //     };
-    //     return this.sendRequest(req, { timeoutMs: 5000 });
-    // }
+    async startServer(serverId: string): Promise<InboundMessage> {
+        const id = uuid();
+        const req: OutboundMessage = {
+            type: 'request', opcode: 'Server.Start', version: this.negotiatedVersion, id, timestamp: Date.now(), payload: { serverId }
+        };
+        return this.sendRequest(req, { timeoutMs: 5000 });
+    }
+
+    async stopServer(serverId: string): Promise<InboundMessage> {
+        const id = uuid();
+        const req: OutboundMessage = {
+            type: 'request', opcode: 'Server.Stop', version: this.negotiatedVersion, id, timestamp: Date.now(), payload: { serverId }
+        };
+        return this.sendRequest(req, { timeoutMs: 5000 });
+    }
 
     async startAplication(): Promise<InboundMessage> {
         const id = uuid();

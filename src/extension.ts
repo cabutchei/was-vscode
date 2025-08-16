@@ -9,7 +9,7 @@ import { CommandService } from './services/CommandService';
 import { ServerProcessService } from './services/ServerProcessService';
 import { DescriptorTreeDataProvider } from './views/DescriptorTreeDataProvider';
 import { registerConfigureLooseEar } from './commands/ConfigureLooseEar';
-import { registerStartServer } from './commands/StartServer';
+import { registerStartServer, registerStopServer } from './commands/StartServer';
 import * as path from 'path';
 import { addServer } from './commands/AddServer';
 import { ServerStore } from './services/ServerStore';
@@ -85,6 +85,8 @@ export async function activate(ctx: vscode.ExtensionContext) {
             
             const commandService = new CommandService(conn, store, serverProcessService);
             registerStartServer(ctx, commandService, descriptorService);
+
+            registerStopServer(ctx, commandService, descriptorService);
 
             
             store.onDidChange(s => {
