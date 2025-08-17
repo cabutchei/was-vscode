@@ -1,5 +1,5 @@
 import { AgentConnection } from '../connection/AgentConnection';
-import { SMStore } from './Store';
+import { SMStore } from './SMStore';
 import { InboundMessage } from '../protocol/messages';
 
 

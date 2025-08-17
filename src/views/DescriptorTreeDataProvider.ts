@@ -24,6 +24,12 @@ export class DescriptorTreeDataProvider implements vscode.TreeDataProvider<Descr
         descriptorService.onDidChange(() => this.refresh());
         serverStore.onDidChange((e) => {
             const element = this.serverElements.get(e.id);
+            if (element) {
+                element.updateStatus(serverStore.getServerStatus(e.id));
+
+            } else {
+                this.newServer = e.id;
+            }
             this.newServer = e.id;
             // If we already have a node for this server, refresh just that node;
             // otherwise, refresh the root so it appears.
@@ -74,12 +80,18 @@ export class DescriptorTreeDataProvider implements vscode.TreeDataProvider<Descr
                 const newServerView = new Server(
                     server.id,
                     server.name,
+                    server.name,    // TODO: handle this better
                     assemblyDescriptor,
                     iconPath
                 );
+                this.serverElements.set(server.id, newServerView);
                 return Promise.resolve([newServerView]);
         } else {
-            return Promise.resolve([]);
+            let el = this.serverElements.values().next().value as Server    // TODO: how do I get the right server?
+            if (!el) {
+                return Promise.resolve([]);
+            }
+            return Promise.resolve([el]);
         }
     }
 

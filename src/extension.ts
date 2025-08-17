@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { ITransport, StdioTransport } from './connection/Transport';
 import { TcpTransport } from './connection/TcpTransport';
 import { AgentConnection } from './connection/AgentConnection';
-import { SMStore } from './services/Store';
+import { SMStore } from './services/SMStore';
 import { logger, LogLevel } from './util/logger';
 import { DescriptorService } from './services/DescriptorService';
 import { CommandService } from './services/CommandService';
@@ -14,6 +14,7 @@ import * as path from 'path';
 import { addServer } from './commands/AddServer';
 import { ServerStore } from './services/ServerStore';
 import { ServerPersistence } from './services/ServerPersistence';
+import { Listener } from './services/Listener';
 
 
 
@@ -43,17 +44,6 @@ export async function activate(ctx: vscode.ExtensionContext) {
 }
 )
     registerConfigureLooseEar(ctx, descriptorService);
-    vscode.commands.registerCommand(
-        'websphere.stopServer',
-        async () => {
-            try {
-                await commandService.stopServer(descriptorService.current.serverId);
-                vscode.window.showInformationMessage('Server stopped.');
-            } catch (e:any) {
-                vscode.window.showErrorMessage(`Failed to stop server: ${e.message}`);
-            }
-        }
-    );
     
     const treeProvider = new DescriptorTreeDataProvider(ctx, descriptorService, serverStore, vscode.Uri.file(
         path.join(ctx.extensionPath, 'resources', 'websphere.png')));
@@ -87,6 +77,8 @@ export async function activate(ctx: vscode.ExtensionContext) {
             registerStartServer(ctx, commandService, descriptorService);
 
             registerStopServer(ctx, commandService, descriptorService);
+
+            const listener = new Listener(conn, serverStore)
 
             
             store.onDidChange(s => {

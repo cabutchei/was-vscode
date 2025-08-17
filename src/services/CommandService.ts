@@ -1,11 +1,12 @@
 import * as vscode from 'vscode';
 import { AgentConnection } from '../connection/AgentConnection';
-import { SMStore } from './Store';
+import { SMStore } from './SMStore';
 import { ServerProcessService } from './ServerProcessService';
-import { ServerInfoResponse, ServerInfoResponsePayload, ServerStatusResponse } from '../protocol/messages';
+import { InboundMessage, ServerInfoResponse, ServerInfoResponsePayload, ServerStatusResponse } from '../protocol/messages';
 
 
 export class CommandService {
+
     constructor(
         private conn: AgentConnection,
         private store: SMStore,
@@ -39,42 +40,24 @@ export class CommandService {
                 }
     }
 
-    async startServer(serverId: string) {   // should be a tcp request too
+    async startServer(serverId: string) {
         vscode.window.showInformationMessage(`Starting server ${serverId}...`);
-        // const cfg = vscode.workspace.getConfiguration('websphere');
-        // const javaPath = cfg.get('server.javaPath', null);
-        // const serverHome = cfg.get('server.home', null);
-        // const logFile = cfg.get('server.logFile', null);
-        // if (!serverHome) {
-        //     throw new Error('`websphere.server.home` must be set');
-        // }
-        // if (!javaPath) {
-        //     throw new Error('`websphere.server.home` must be set');
-        // }
-        // if (!logFile) {
-        //     throw new Error('`websphere.server.home` must be set');
-        // }
-        // const startScript = '-cp ' + serverHome + ' MockServer'; // TODO: make this configurable
-        // const proc = await this.processSvc.launch(
-        //     serverId,
-        //     javaPath,
-        //     startScript,
-        //     logFile
-        // );
-
-        // return new Promise<void>((resolve, reject) => {
-        //     proc.on('close', code => code === 0 ? resolve() : reject(new Error('Start failed')));
-        // });
         await this.conn.startServer(serverId)
-            .then(() => vscode.window.showInformationMessage(`Server ${serverId} started successfully.`))
+            .then()
             .catch(err => vscode.window.showErrorMessage(`Failed to start server ${serverId}: ${err.message}`));
     }
 
     async stopServer(serverId: string) {
-        // await this.processSvc.stop(serverId);   // change of plans, management server should control the process. TODO: change this to a tcp request
+        vscode.window.showInformationMessage(`Stopping server ${serverId}...`);
         await this.conn.stopServer(serverId)
-            .then(() => vscode.window.showInformationMessage(`Server ${serverId} stopped successfully.`))
+            .then()
             .catch(err => vscode.window.showErrorMessage(`Failed to stop server ${serverId}: ${err.message}`));
+        setTimeout(() => this.processSvc.stopTailing('id'),
+            15000)  // this should actually wait for the server stop notification
+    }
+
+    streamLogs(serverId: string) {
+        this.processSvc.startTailing('id', 'C:/Desenvolvimento/IBM/WebSphere/AppServer_8_5/profiles/AppSrv03/logs/server1/SystemOut.log');
     }
 
     async startApplication(appId: string) {
@@ -91,7 +74,6 @@ export class CommandService {
         path = value;
         const resp = await this.conn.getServerInfo(path) as ServerInfoResponse;
         return resp.payload;
-
-
     }
+
 }

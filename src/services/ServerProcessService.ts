@@ -79,7 +79,8 @@ export class ServerProcessService {
         this.procs.delete(serverId);
   }
 
-    private startTailing(id: string, filePath: string) {
+    startTailing(id: string, filePath: string) {
+        this.output.show(true);
         this.output.appendLine(`start tailing: ${filePath}`)
         fs.stat(filePath, (err, stats) => {
         const pos = err ? 0 : stats.size;
@@ -93,7 +94,7 @@ export class ServerProcessService {
         });
     }
 
-    private readNew(id: string, filePath: string) {
+    readNew(id: string, filePath: string) {
         const prev = this.positions.get(id) ?? 0;
         fs.stat(filePath, (e,s) => {
             if (e || s.size <= prev) return;
@@ -109,7 +110,7 @@ export class ServerProcessService {
     });
 }
 
-    private stopTailing(id: string) {
+    stopTailing(id: string) {
         this.watchers.get(id)?.close();
         this.watchers.delete(id);
         this.positions.delete(id);
