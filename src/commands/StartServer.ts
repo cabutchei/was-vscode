@@ -1,11 +1,11 @@
 import * as vscode from 'vscode';
 import { DescriptorService } from '../services/DescriptorService';
 import { CommandService } from '../services/CommandService';
-import * as serverView from '../views/Server';
+import * as serverView from '../views/ServerView';
 
 // trying my best to implement separation of concerns
 
-export async function startServer(serverItem: serverView.Server, commandService: CommandService, descriptorService: DescriptorService) {
+export async function startServer(serverItem: serverView.ServerView, commandService: CommandService, descriptorService: DescriptorService) {
     const serverId = serverItem.id;
     try{
         commandService.streamLogs(serverId);
@@ -21,7 +21,7 @@ export function registerStartServer(context: vscode.ExtensionContext, commandSer
     context.subscriptions.push(
         vscode.commands.registerCommand(
             'websphere.startServer',
-            (serverItem: serverView.Server) => {
+            (serverItem: serverView.ServerView) => {
                 startServer(serverItem, commandService, descriptorService)
             }
         )
@@ -33,7 +33,7 @@ export function registerStopServer(context: vscode.ExtensionContext, commandServ
     context.subscriptions.push(
         vscode.commands.registerCommand(
             'websphere.stopServer',
-            async (serverItem: serverView.Server) => {
+            async (serverItem: serverView.ServerView) => {
                 const serverId = serverItem.id;
                 try {
                     await commandService.stopServer(serverId);

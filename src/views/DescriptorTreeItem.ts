@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { DescriptorService } from '../services/DescriptorService';
 import { ApplicationDescriptor, AssemblyDescriptor, ModuleDescriptor } from '../models/AssemblyDescriptor';
-import { Server } from './Server'
+import { ServerView } from './ServerView'
 
 
 export class DescriptorTreeItem extends vscode.TreeItem {

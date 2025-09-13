@@ -21,6 +21,21 @@ export interface HandshakeResponse {
     timestamp: number;
 }
 
+export interface EchoRequest {
+    type: 'request';
+    opcode: 'Echo';
+    id: string;
+}
+
+export interface EchoResponse {
+    type: 'response';
+    opcode: 'Echo';
+    id: string;
+    success: boolean;
+    error?: { code: string; message: string };
+    timestamp: number;
+}
+
 export interface ServerInfoRequest {
     type: 'request';
     opcode: 'Server.Info';
@@ -42,9 +57,9 @@ export interface ServerInfoResponse {
 export interface ServerInfoResponsePayload {
     id: string;
     name: string;
-    version: string;
     servers: string[];
     profiles: string[];
+    serverType: string;
 }
 
 export interface AddServerRequest {
@@ -163,8 +178,17 @@ export interface StopApplicationRequest {
     timestamp: number;
 }
 
+export interface Event {
+    type: 'event';
+    opcode: string;
+    version: number;
+    id?: string;
+    timestamp: number;
+    payload: any;
+}
 
-export type OutboundMessage = HandshakeRequest | ServerInfoRequest | AddServerRequest | ServerStatusRequest | StartServerRequest | StopServerRequest | StartApplicationRequest | StopApplicationRequest;
-export type InboundMessage = HandshakeResponse | ServerInfoResponse | AddServerResponse | ServerStatusResponse | StartServerResponse | StopServerResponse | { type: 'event'; opcode: string; version: number; id?: string; timestamp: number; payload: any };
+
+export type OutboundMessage = HandshakeRequest | EchoRequest | ServerInfoRequest | AddServerRequest | ServerStatusRequest | StartServerRequest | StopServerRequest | StartApplicationRequest | StopApplicationRequest;
+export type InboundMessage = HandshakeResponse | EchoResponse | ServerInfoResponse | AddServerResponse | ServerStatusResponse | StartServerResponse | StopServerResponse | Event;
 
 export interface RequestOptions { timeoutMs?: number; }

@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 
 
 
-export type ServerStatus = 'unknown' | 'starting' | 'started' | 'stopping' | 'stopped';
+export type ServerStatus = 'unknown' | 'starting' | 'started' | 'stopping' | 'stopped' | 'failed';
 
 export class ServerStatusManager {
     private byId = new Map<string, ServerStatus>();

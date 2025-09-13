@@ -1,65 +1,76 @@
 import * as vscode from 'vscode';
 import { ServerStatus } from './ServerStatusManager';
-import { ServerType } from './ServerTypes';
+import { ServerTypes } from './ServerTypes';
 import { v4 as uuid } from 'uuid';
+import { Server, ServerFactory } from './ServerFactory';
 
-
-
-export interface Server {
-    id: string;
-    name: string;
-    path: string;
-    server: string;
-    profile: string;
-}
 
 export interface Deployment {
-    id: string;
     serverId: string;
     label: string;
-    sourcePath: string;
+    path: string;
 }
 
 export class ServerStore {
-    private emitter = new vscode.EventEmitter<Server[]>();
-    private servers: Server[] = [];
-    private deployments: { [serverId: string]: Deployment[] } = {};
-    private serverTypes: Map<string, ServerType> = new Map();
+    private servers = new Map<string, Server>();
+    private deployments = new Map<string, Deployment>();
     private byId = new Map<string, ServerStatus>();
     private _onDidChange = new vscode.EventEmitter<{ id: string; status: ServerStatus }>();
-    readonly onDidChange = this._onDidChange.event;
+    private _onAddDeployment = new vscode.EventEmitter<{ serverId: string, deployment: Deployment }>();
+    readonly onAddDeployment = this._onAddDeployment.event;
+    readonly onAddServer = this._onDidChange.event;
 
     empty(): boolean {
-        return this.servers.length === 0;
+        return this.servers.size === 0;
     }
 
     getServer(id: string): Server | undefined {
-        return this.servers.find(server => server.id === id);
+        return this.servers.get(id);
     }
 
     getServers(): Server[] {
+        return Array.from(this.servers.values());
+    }
+
+    getServerMap(): Map<string, Server> {
         return this.servers;
     }
 
-    addServer(server: Server): void {
-        this.servers.push(server);
-        this.deployments[server.id] = [];
-        this._onDidChange.fire({id: server.id, status: 'unknown'});
+    addServer(name: string, path: string, serverType: string, baseServerName: string, webSphereProfileName: string): string {
+        const serverId = uuid();
+        const label = ServerTypes.getLabelForServer(serverType);
+        let server = ServerFactory.create(
+            name, this.generateUniqueLabel(label), path,
+            serverType, baseServerName, webSphereProfileName
+        );
+        this.servers.set(serverId, server);
+        this._onDidChange.fire({id: serverId, status: this.getServerStatus(serverId)});
+        return serverId;
     }
 
-    getServerType(id: string): ServerType | undefined {
-        return this.serverTypes.get(id);
+    restoreServer(server: Server) {
+        const serevrId = uuid();
+        this.servers.set(serevrId, server);
     }
-    setServerType(id: string, type: ServerType): void {
-        this.serverTypes.set(id, type);
+
+    generateUniqueLabel(label: string): string {
+        let uniqueLabel = label;
+        let id = 2;
+        for (const server of this.getServers()) {
+            if (uniqueLabel === server.uniqueLabel) {
+                uniqueLabel = `${uniqueLabel} (${id++})`;
+            }
+        }
+        return uniqueLabel;
     }
+
 
     getServerStatus(id: string): ServerStatus { return this.byId.get(id) ?? 'unknown'; }
 
     setServerStatus(id: string, status: ServerStatus): void {
         const prev = this.byId.get(id);
         if (prev === status) return;
-        const server = this.servers.find(s => s.id === id);
+        const server = this.getServer(id);
         this.byId.set(id, status);
         this._onDidChange.fire({ id, status });
     }
@@ -68,21 +79,20 @@ export class ServerStore {
     setRunning(id: string)  { this.setServerStatus(id, 'started'); }
     setStopping(id: string) { this.setServerStatus(id, 'stopping'); }
     setStopped(id: string)  { this.setServerStatus(id, 'stopped'); }
+    setFailed(id: string)   { this.setServerStatus(id, 'failed'); }
 
-    getDeployments(serverId: string): Deployment[] {
-        return this.deployments[serverId] || [];
-    }
-
+    
     addDeployment(serverId: string, deployment: Deployment): void {
-        if (!this.deployments[serverId]) {
-            this.deployments[serverId] = [];
-        }
-        this.deployments[serverId].push(deployment);
+        this.deployments.set(serverId, deployment);
+        if (deployment) this._onAddDeployment.fire({ serverId, deployment });
     }
+
+    getDeployment(serverId: string, name: string): Deployment | undefined {
+        return this.deployments.get(serverId);
+    }
+
 
     removeDeployment(serverId: string, deploymentId: string): void {
-        if (this.deployments[serverId]) {
-            this.deployments[serverId] = this.deployments[serverId].filter(d => d.id !== deploymentId);
-        }
+        this.deployments.delete(serverId);
     }
 }

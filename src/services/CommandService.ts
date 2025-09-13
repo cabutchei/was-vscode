@@ -1,28 +1,19 @@
 import * as vscode from 'vscode';
 import { AgentConnection } from '../connection/AgentConnection';
-import { SMStore } from './SMStore';
+import { SMSManager } from './SMSManager';
 import { ServerProcessService } from './ServerProcessService';
-import { InboundMessage, ServerInfoResponse, ServerInfoResponsePayload, ServerStatusResponse } from '../protocol/messages';
+import { ServerInfoResponse, ServerInfoResponsePayload, ServerStatusResponse } from '../protocol/messages';
 
 
 export class CommandService {
 
     constructor(
         private conn: AgentConnection,
-        private store: SMStore,
+        private store: SMSManager,
         private processSvc: ServerProcessService) {}
 
-    async initialize() {
-        await this.conn.handshake();
-        this.store.update({ connected: true });
-    }
 
     async addServer(serverId: string, serverPath: string) {
-        // const server = this.store.getServer(serverId);
-        // if (!server) {
-        //     vscode.window.showErrorMessage(`Server with ID ${serverId} already exists.`);
-        //     return;
-        // }
         this.conn.addServer(
             serverId,
             serverPath
@@ -31,13 +22,6 @@ export class CommandService {
         }).catch(err => {
             vscode.window.showErrorMessage(`Failed to add server: ${err.message}`);
         });
-    }
-
-    async refreshServerStatus() {
-        const resp = await this.conn.serverStatus() as ServerStatusResponse;
-                if (resp.success && resp.payload) {
-                    this.store.update({ serverState: (resp.payload as any).state, lastChecked: Date.now() });   // do I standardize the status names on the server side?
-                }
     }
 
     async startServer(serverId: string) {

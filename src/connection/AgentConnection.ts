@@ -46,6 +46,13 @@ export class AgentConnection {
         logger.info('Handshake success', { version: this.negotiatedVersion });
     }
 
+    async echo(): Promise<void> {
+        const req: OutboundMessage = { type: 'request', id: uuid(), opcode: 'Echo' };
+        await this.sendRequest(req, { timeoutMs: 1000 }).catch(
+            () => { throw new Error('Disconnected')}
+        );
+    }
+
     async getServerInfo(path: string): Promise<InboundMessage> {
         const id = uuid();
         const req: ServerInfoRequest = {
@@ -88,6 +95,14 @@ export class AgentConnection {
         return this.sendRequest(req, { timeoutMs: 20000 });
     }
 
+    // async installApplication(): Promise<InboundMessage> {
+    //     const id = uuid();
+    //     const req: OutboundMessage = {
+    //         type: 'request', opcode: 'Application.Install', version: this.negotiatedVersion, id, timestamp: Date.now(), payload: { serverId }
+    //     };
+    //     return this.sendRequest(req, { timeoutMs: 2000});
+    // }
+
     async startAplication(): Promise<InboundMessage> {
         const id = uuid();
         const req: OutboundMessage = {
@@ -119,28 +134,65 @@ export class AgentConnection {
 
     private onData(chunk: string) {
         this.buffer += chunk;
+        const lines = this.consumeLines();
+        for (let line of lines) {
+            const msg: InboundMessage = this.parseMessage(line);
+            logger.debug('RECV', msg);
+            try {
+                switch (msg.type) {
+                    case 'response':
+                        const pending = this.popPending(msg.id)!;
+                        msg.success? pending.resolve(msg): pending.reject(new Error(msg?.error?.message));
+                        break;
+                    case 'event':
+                        this._onEvent.fire(msg);
+                }
+            } catch (e:any) {
+                logger.error('Failed to parse message', { line, error: e.message });
+            }
+        }
+    }
+
+    extract(key: string, msg: string) {
+        new RegExp(`${key}`)
+    }
+
+    popPending(id: string) {
+        if (id && this.pending.has(id)) {
+            const pending = this.pending.get(id)!;
+            clearTimeout(pending.timeout!);
+            this.pending.delete(id);
+            return pending;
+        }
+    }
+
+    parseEcho(echo: string) {
+        let rawMessage = JSON.parse(echo);
+        if(!rawMessage.type) {
+            throw new Error('Invalid message: missing type');
+        }
+
+        return rawMessage as InboundMessage
+    }
+
+    parseMessage(message: string): InboundMessage {
+        let rawMessage = JSON.parse(message);
+        if (!rawMessage?.type) {
+            throw new Error('missing type property');
+        }
+
+        return rawMessage as InboundMessage;
+    }
+
+    *consumeLines() {
         let idx: number;
         while ((idx = this.buffer.indexOf('\n')) >= 0) {
         const raw = this.buffer.slice(0, idx).trim();
         this.buffer = this.buffer.slice(idx + 1);
-        if (!raw) continue;
-        try {
-            const msg: InboundMessage = JSON.parse(raw);
-            logger.debug('RECV', msg);
-            switch (msg.type) {
-                case 'response':
-                    if (msg.id && this.pending.has(msg.id)) {
-                        const pending = this.pending.get(msg.id)!;
-                        clearTimeout(pending.timeout); pending.resolve(msg); this.pending.delete(msg.id);
-                    }
-                    break;
-                case 'event':
-                    this._onEvent.fire(msg);
-
-            }
-        } catch (e:any) {
-            logger.error('Failed to parse message', { raw, error: e.message });
+        if (raw) {
+            yield raw;
         }
         }
     }
+
 }

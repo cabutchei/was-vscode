@@ -1,12 +1,13 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import { DescriptorService } from '../services/DescriptorService';
-import { ApplicationDescriptor, AssemblyDescriptor, ModuleDescriptor } from '../models/AssemblyDescriptor';
-import { Server } from './Server'
-import { Application } from './EAR'
-import { Module } from './Module'
+import { ApplicationDescriptor, ModuleDescriptor } from '../models/AssemblyDescriptor';
+import { ServerView } from './ServerView'
+import { ApplicationView } from './ApplicationView'
+import { Module } from './ModuleView'
 import { DescriptorTreeItem } from './DescriptorTreeItem';
 import { ServerStore } from '../services/ServerStore';
+import { ServerTypes } from '../services/ServerTypes';
 
 
 
@@ -14,32 +15,40 @@ export class DescriptorTreeDataProvider implements vscode.TreeDataProvider<Descr
     private _onDidChangeTreeData = new vscode.EventEmitter<DescriptorTreeItem | undefined>();
     readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
 
-    private serverElements = new Map<string, Server>();
+    private serverElements = new Map<string, ServerView>();
     private newServer: string | null;
 
     constructor(private context: vscode.ExtensionContext, private descriptorService: DescriptorService, private serverStore: ServerStore, public readonly iconPath?: vscode.Uri) {
         this.context = context;
         this.iconPath = iconPath;
-        this.serverStore = serverStore;
-        descriptorService.onDidChange(() => this.refresh());
-        serverStore.onDidChange((e) => {
+        Array.from(this.serverStore.getServerMap().keys())
+            .forEach(id => {
+                const server = this.serverStore.getServer(id);
+                if (!server) return;
+                const serverView = new ServerView(
+                    id,
+                    server.uniqueLabel,
+                    server.uniqueLabel,
+                    iconPath
+                );
+                serverView.updateStatus('unknown');
+                this.serverElements.set(id, serverView);
+            }
+        );
+
+        serverStore.onAddServer((e) => {
             const element = this.serverElements.get(e.id);
             if (element) {
                 element.updateStatus(serverStore.getServerStatus(e.id));
-
             } else {
                 this.newServer = e.id;
             }
             this.newServer = e.id;
-            // If we already have a node for this server, refresh just that node;
-            // otherwise, refresh the root so it appears.
             this._onDidChangeTreeData.fire(element ?? undefined);
         }
     );
-
-        this.newServer = null;
-
-    }
+    this.newServer = null;
+}
 
     refresh(element?: DescriptorTreeItem): void {
         this._onDidChangeTreeData.fire(element);
@@ -57,75 +66,69 @@ export class DescriptorTreeDataProvider implements vscode.TreeDataProvider<Descr
 
         if (!item) {
             if (this.newServer) {
-                const server = this.serverStore.getServer(this.newServer);
-                const serverType = this.serverStore.getServerType(this.newServer);
-                let iconPath: vscode.Uri | undefined;
 
-                if(!serverType) {   // TODO: handle this better
-                    return Promise.resolve([]);
-                }
-
-                if(serverType?.icon) {
-                    iconPath = vscode.Uri.file(
-                        path.join(this.context.extensionPath, serverType.icon)
-                    );
-                }
-
-                if (!server) {
-                    return Promise.resolve([]);
-                }
-
+                const serverId = this.newServer;
                 this.newServer = null;
+                const server = this.serverStore.getServer(serverId);
+                if (!server) return Promise.resolve([]);
 
-                const newServerView = new Server(
-                    server.id,
-                    server.name,
-                    server.name,    // TODO: handle this better
-                    assemblyDescriptor,
+                let iconPath = vscode.Uri.file(
+                    path.join(
+                        this.context.extensionPath, ServerTypes.getIconForServer(server.serverType)
+                    )
+                );
+
+                const newServerView = new ServerView(
+                    serverId,
+                    server.uniqueLabel,
+                    server.uniqueLabel,
                     iconPath
                 );
-                this.serverElements.set(server.id, newServerView);
-                return Promise.resolve([newServerView]);
-        } else {
-            let el = this.serverElements.values().next().value as Server    // TODO: how do I get the right server?
-            if (!el) {
-                return Promise.resolve([]);
-            }
-            return Promise.resolve([el]);
-        }
-    }
-
-        if (item.isServer()) {
-            item = item as Server;
-            const assemblyDescriptor = this.descriptorService.currentServerDescriptor;    // change name later, this describes the server ear deployment
-            const items = assemblyDescriptor.modules.map(
-                app => {
-                    app = (app as ApplicationDescriptor);
-                    return new Application(
-                        app.id,
-                        assemblyDescriptor,
-                        app
+                this.serverElements.set(serverId, newServerView);
+                newServerView.updateStatus(this.serverStore.getServerStatus(serverId));
+                return Promise.resolve(
+                    Array.from(this.serverElements.values())
                 );
+            } else {
+                let el = this.serverElements.values().next().value as ServerView    // TODO: how do I get the right server?
+                if (!el) {
+                    return Promise.resolve([]);
+                }
+                return Promise.resolve([el]);
             }
-        );
-            return Promise.resolve(items);
         }
 
-        if (item.isApplication()) {
-            item = item as Application;
-            const assemblyDescriptor = this.descriptorService.current
-            const items = assemblyDescriptor.modules.map(
-                module => {
-                    module = (module as ModuleDescriptor)
-                    return new Module(
-                        module.id,
-                        module
-                    )
+            if (item.isServer()) {
+                item = item as ServerView;
+                const assemblyDescriptor = this.descriptorService.currentServerDescriptor;    // change name later, this describes the server ear deployment
+                const items = assemblyDescriptor.modules.map(
+                    app => {
+                        app = (app as ApplicationDescriptor);
+                        return new ApplicationView(
+                            app.id,
+                            assemblyDescriptor,
+                            app
+                    );
                 }
             );
-            return Promise.resolve(items);
+                return Promise.resolve(items);
+            }
+
+            if (item.isApplication()) {
+                item = item as ApplicationView;
+                const assemblyDescriptor = this.descriptorService.current;
+                const items = assemblyDescriptor.modules.map(
+                    module => {
+                        module = (module as ModuleDescriptor)
+                        return new Module(
+                            module.id,
+                            module
+                        )
+                    }
+                );
+                return Promise.resolve(items);
+            }
+
+            return Promise.resolve([]);
         }
-        
-        return Promise.resolve([]);
-    }
 }

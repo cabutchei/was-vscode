@@ -1,13 +1,10 @@
 import * as vscode from 'vscode';
-import { DescriptorService } from '../services/DescriptorService';
-import { Server, ServerStore } from '../services/ServerStore';
-import { CommandService } from '../services/CommandService';
-import { v4 as uuid } from 'uuid';
-import { ServerTypes } from '../services/ServerTypes';
+// import { ServerStore } from '../services/ServerStore';
+import { ServerStore } from '../services/ServerStore';
+import { ServerView } from '../views/ServerView';
+import * as path from 'path';
 
-
-
-export async function addDeployment() {
+export async function addDeployment(serverItem: ServerView, serverStore: ServerStore) {
     const workspaceFolders = vscode.workspace.workspaceFolders;
     if (!workspaceFolders) {
         vscode.window.showErrorMessage('No workspace folders found.');
@@ -28,5 +25,25 @@ export async function addDeployment() {
         return;
     }
 
-    vscode.window.showInformationMessage(`Deployment folder selected: ${selection.label}`);
+    const applicationPath = selection.label;
+    const applicationName = path.parse(applicationPath).name;
+
+    vscode.window.showInformationMessage(
+        `Deployment folder selected: ${applicationName}`
+    );
+
+    serverStore.addDeployment(serverItem.id, {
+        serverId: serverItem.id,
+        label: applicationName,
+        path: applicationPath
+    });
+}
+
+export function registerAddDeployment(context: vscode.ExtensionContext, serverStore: ServerStore) {
+    context.subscriptions.push(
+        vscode.commands.registerCommand(
+            'websphere.addDeployment',
+            (serverItem: ServerView) => addDeployment(serverItem, serverStore)
+        )
+    );
 }

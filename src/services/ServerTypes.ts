@@ -1,33 +1,29 @@
-import * as vscode from 'vscode';
+
+export namespace ServerTypes {
+
+    export const WASNDV85 = "com.ibm.websphere.ND.v85";
+
+    export const WASBASEV85 = "com.ibm.websphere.BASE.v85";
+
+    export const WASNDV80 = "com.ibm.websphere.ND.v80";
+
+    export const WASBASEV80 = "com.ibm.websphere.BASE.v80";
 
 
-
-export interface ServerType {
-    id: string,
-    name: string,
-    label: string
-    version: string
-    icon?: string;
-}
-
-
-// meant to translate websphere server description
-export class ServerTypes {
-
-    private static serverTypes: ServerType[] = [
-        {
-            id: 'ND',
-            name: 'IBM WebSphere Application Server Network Deployment',
-            label: 'Websphere 8.5',
-            version: '8.5.5',
-            icon: 'resources/websphere.png' }
-    ];
-
-    static getAll(): ServerType[] {
-        return this.serverTypes;
+    export function getIconForServer(serverType: string) {
+        return "resources/websphere.png";
     }
 
-    static get(id: string): ServerType | undefined {
-        return this.serverTypes.find(type => type.id === id);
+    export function getLabelForServer(serverType: string) {
+        switch (serverType) {
+            case WASBASEV80:
+            case WASNDV80:
+                return "WebSphere Application Server 8.0";
+            case WASBASEV85:
+            case WASNDV85:
+                return "WebSphere Application Server 8.5";
+            default:
+                return "Websphere Application Server";
+        }
     }
 }

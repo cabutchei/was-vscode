@@ -39,6 +39,10 @@
             "title": "Stop server"
         },
         {
+          "command": "websphere.addDeployment",
+          "title": "Adddeployment"
+        },
+        {
             "command": "websphere.refreshStatus",
             "title": "Refresh Server Status"
         },
@@ -78,11 +82,6 @@
         ],
         "view/item/context": [
             {
-                "command": "websphere.configureLooseEar",
-                "when": "view == websphere && viewItem == server",
-                "group": "navigation"
-            },
-            {
                 "command": "websphere.startServer",
                 "when": "view == websphere && viewItem == server",
                 "group": "navigation"
@@ -93,7 +92,7 @@
                 "group": "navigation"
             },
             {
-                "command": "websphere.stopServer",
+                "command": "websphere.addDeployment",
                 "when": "view == websphere && viewItem == server",
                 "group": "navigation"
             },
